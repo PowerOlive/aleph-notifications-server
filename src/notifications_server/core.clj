@@ -46,8 +46,9 @@
          conn)))))
 
 (defn notification-handler [req]
-  (let [id ((:params req) "id")
-        message ((:params req) "message")]
+  (let [params (:params req)
+        id (params "id")
+        message (params "message")]
     (if (bus/active? channels id)
       (do (bus/publish! channels id message)
           {:status 200
@@ -67,7 +68,7 @@
                       echo-handler))
     (GET "/subscribe" [] subscription-handler)
     (POST "/notify" [] notification-handler)
-    (route/not-found "No such page."))))
+    (route/not-found "What are you trying to do?"))))
 
 
 ;; (defn- wrap-with-error-handler [app]
@@ -91,11 +92,9 @@
 
 (defonce server (atom nil))
 
-;; (defn stop-server []
-;;   (when-not (nil? @server)
-;;     ;; graceful shutdown: wait 100ms for existing requests to be finished
-;;     (@server :timeout 100)
-;;     (reset! server nil)))
+(defn stop-server []
+  (when-not (nil? @server)
+    (.close @server)))
 
 (defn -main [& [port]]
   (let [port (Integer. (or port (env :port) 10000))]
