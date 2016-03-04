@@ -13,6 +13,7 @@
                  [org.clojure/core.async "0.2.374"]
                  ;; Environment settings
                  [environ "1.0.0"]]
+  :min-lein-version "2.0.0"
   :profiles {:uberjar {:main pro-server.web
                        :aot :all}
              :production {:env {:production true
