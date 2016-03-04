@@ -13,10 +13,7 @@
    [manifold.deferred :as d]
    [manifold.bus :as bus]
    ;; Environment and configuration
-   [environ.core :refer [env]]
-   ;; Redis
-   [taoensso.carmine :as r]
-   [taoensso.carmine.message-queue :as mq]))
+   [environ.core :refer [env]]))
 
 
 (def non-websocket-request
