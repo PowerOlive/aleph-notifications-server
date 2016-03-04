@@ -13,7 +13,10 @@
    [manifold.deferred :as d]
    [manifold.bus :as bus]
    ;; Environment and configuration
-   [environ.core :refer [env]]))
+   [environ.core :refer [env]]
+   ;; Redis
+   [taoensso.carmine :as r]
+   [taoensso.carmine.message-queue :as mq]))
 
 
 (def non-websocket-request
@@ -49,14 +52,19 @@
   (let [params (:params req)
         id (params "id")
         message (params "message")]
+    (pprint (bus/topic->subscribers channels))
     (if (bus/active? channels id)
-      (do (bus/publish! channels id message)
+      (let [result (bus/publish! channels id message)]
+        (if (and @result (bus/active? channels id))
           {:status 200
            :headers {"content-type" "application/text"}
-           :body "Ok"})
+           :body "Ok"}
+          {:status 200
+           :headers {"content-type" "application/text"}
+           :body "Not delivered"}))
       {:status 200
        :headers {"content-type" "application/text"}
-       :body "Nope"})))
+       :body "No subscribers"})))
 
 (def app
   (params/wrap-params
@@ -70,25 +78,6 @@
     (POST "/notify" [] notification-handler)
     (route/not-found "What are you trying to do?"))))
 
-
-;; (defn- wrap-with-error-handler [app]
-;;   "Ring wrapper providing exception capture"
-;;   (let [wrap-error-page
-;;         (fn [handler]
-;;           (fn [req]
-;;             (try (handler req)
-;;                  (catch Exception e
-;;                    (try (print-stack-trace e 20)
-;;                         (catch Exception g
-;;                           (println "Exception trying to log exception?")))
-;;                    {:status 500
-;;                     :headers {"Content-Type" "text/plain"}
-;;                     :body "500 Internal Error in Pro Server."}))))]
-;;     ((if (or (env :production)
-;;              (env :staging))
-;;        wrap-error-page
-;;        trace/wrap-stacktrace)
-;;      app)))
 
 (defonce server (atom nil))
 
