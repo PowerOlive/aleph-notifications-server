@@ -13,7 +13,8 @@
    [manifold.deferred :as d]
    [manifold.bus :as bus]
    ;; Environment and configuration
-   [environ.core :refer [env]]))
+   [environ.core :refer [env]])
+  (:gen-class))
 
 
 (def non-websocket-request
@@ -68,12 +69,17 @@
 (defn broadcast-handler [req]
   (let [params (:params req)
         message (params "message")]
+    ;; This surely can be done much better
     (doseq [chan (bus/topic->subscribers channels)]
       (future (bus/publish! channels (first chan) message)))
     {:status 200
      :headers {"content-type" "application/text"}
      :body "Ok"}))
 
+(defn query-stats [req]
+   {:status 200
+     :headers {"content-type" "application/text"}
+     :body (str (count (bus/topic->subscribers channels)))})
 
 (def app
   (params/wrap-params
@@ -86,6 +92,7 @@
     (GET "/subscribe" [] subscription-handler)
     (POST "/notify" [] notification-handler)
     (POST "/broadcast" [] broadcast-handler)
+    (GET "/stats" [] query-stats)
     (route/not-found "What are you trying to do?"))))
 
 
