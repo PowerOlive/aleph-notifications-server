@@ -41,6 +41,7 @@
     (if-not conn
       non-websocket-request
       (d/let-flow [channel-id (s/take! conn)]
+        ;(println "Subscribe: " channel-id)
         (s/connect
          (bus/subscribe channels channel-id)
          conn)))))
@@ -49,7 +50,8 @@
   (let [params (:params req)
         id (params "id")
         message (params "message")]
-    (pprint (bus/topic->subscribers channels))
+    ;(pprint (bus/topic->subscribers channels))
+    ;(pprint (bus/downstream channels id))
     (if (bus/active? channels id)
       (let [result (bus/publish! channels id message)]
         (if (and @result (bus/active? channels id))
@@ -63,6 +65,16 @@
        :headers {"content-type" "application/text"}
        :body "No subscribers"})))
 
+(defn broadcast-handler [req]
+  (let [params (:params req)
+        message (params "message")]
+    (loop [chan (bus/topic->subscribers channels)]
+      (future (bus/publish! channels (ffirst chan) message)))
+    {:status 200
+     :headers {"content-type" "application/text"}
+     :body "Ok"}))
+
+
 (def app
   (params/wrap-params
    (compojure/routes
@@ -73,6 +85,7 @@
                       echo-handler))
     (GET "/subscribe" [] subscription-handler)
     (POST "/notify" [] notification-handler)
+    (POST "/broadcast" [] broadcast-handler)
     (route/not-found "What are you trying to do?"))))
 
 
