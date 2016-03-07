@@ -68,8 +68,8 @@
 (defn broadcast-handler [req]
   (let [params (:params req)
         message (params "message")]
-    (loop [chan (bus/topic->subscribers channels)]
-      (future (bus/publish! channels (ffirst chan) message)))
+    (doseq [chan (bus/topic->subscribers channels)]
+      (future (bus/publish! channels (first chan) message)))
     {:status 200
      :headers {"content-type" "application/text"}
      :body "Ok"}))
