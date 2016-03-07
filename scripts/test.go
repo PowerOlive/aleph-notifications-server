@@ -46,7 +46,6 @@ func createWs(interrupt *chan os.Signal) {
 		select {
 		case <-ticker.C:
 			err := c.WriteMessage(websocket.TextMessage, []byte(uuid.NewV4().String()))
-			//err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
 			if err != nil {
 				log.Println("write:", err)
 				return
@@ -77,9 +76,12 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	for i := 0; i < 40000; i++ {
+	for i := 0; i < 28000; i++ {
 		go createWs(&interrupt)
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(time.Millisecond * 5)
+		if i%1000 == 0 {
+			log.Println("Num connections: ", i)
+		}
 	}
 
 	select {}
